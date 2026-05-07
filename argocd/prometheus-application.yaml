@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prometheus
+  namespace: argocd
+spec:
+  syncPolicy:
+    automated: {}
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    namespace: observability
+    server: https://kubernetes.default.svc
+  project: observability
+  sources:
+  - repoURL: 'https://prometheus-community.github.io/helm-charts'
+    targetRevision: 25.27.0
+    chart: prometheus
+    helm:
+      valueFiles:
+      - $values/helm_values/dyvenia/observability/hetzner/dyvenia-internal-dev/prometheus/values-1-main.yaml
+      - $values/helm_values/dyvenia/observability/hetzner/dyvenia-internal-dev/prometheus/values-2-alert-rules.yaml
+      - $values/helm_values/dyvenia/observability/hetzner/dyvenia-internal-dev/prometheus/values-3-prometheus-config.yaml
+      - $values/helm_values/dyvenia/observability/hetzner/dyvenia-internal-dev/prometheus/values-4-alertmanager-template.yaml
+  - repoURL: 'git@github.com:mshestalyuk/k8s-test-repo.git'
+    targetRevision: 'master'
+    ref: values

@@ -1,0 +1,92 @@
+rbac:
+  create: true
+
+podSecurityPolicy:
+  enabled: false
+
+
+serviceAccounts:
+  server:
+    create: true
+
+
+server:
+  name: server
+
+  ingress:
+    enabled: false
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: internal-ca-issuer
+      nginx.ingress.kubernetes.io/rewrite-target: "/"
+      nginx.ingress.kubernetes.io/proxy-body-size: 20m
+    hosts:
+      - "prometheus.dev.internal.dyvenia.lan"
+    tls:
+      - hosts:
+        - prometheus.dev.internal.dyvenia.lan
+        secretName: prometheus-dev-ingress-tls
+
+  extraArgs:
+    web.external-url: "https://prometheus.dev.internal.dyvenia.lan"
+
+  image:
+    repository: quay.io/prometheus/prometheus
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+
+
+  storagePath: ""
+  global:
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    evaluation_interval: 1m
+
+  strategy:
+    type: Recreate
+
+  persistentVolume:
+    enabled: true
+    statefulSetNameOverride: ""
+    accessModes:
+      - ReadWriteOnce
+    existingClaim: ""
+    mountPath: /data
+    size: 50Gi
+
+  startupProbe:
+    enabled: false
+    periodSeconds: 5
+    failureThreshold: 30
+    timeoutSeconds: 10
+
+  resources:
+     limits:
+       cpu: 700m
+       memory: 4Gi
+     requests:
+       memory: 4Gi
+
+  service:
+    enabled: true
+
+
+networkPolicy:
+  enabled: false
+
+
+kube-state-metrics:
+  enabled: true
+
+
+prometheus-node-exporter:
+  enabled: true
+
+
+prometheus-pushgateway:
+  enabled: true
+
+configmapReload:
+  prometheus:
+    enabled: false

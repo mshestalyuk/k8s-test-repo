@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: observability
+  namespace: argocd
+spec:
+  destinations:
+  - name: in-cluster-dev
+    namespace: '*'
+    server: https://kubernetes.default.svc
+  sourceRepos:
+  - git@github.com:mshestalyuk/k8s-test-repo.git
+  - https://grafana.github.io/helm-charts
+  - https://prometheus-community.github.io/helm-charts
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
