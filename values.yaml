@@ -1,0 +1,10 @@
+global:
+  domain: argocd.local
+
+configs:
+  params:
+    server.insecure: true   # serve HTTP, easier for port-forward access
+
+server:
+  service:
+    type: ClusterIP
