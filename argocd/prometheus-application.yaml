@@ -18,10 +18,9 @@ spec:
     chart: prometheus
     helm:
       valueFiles:
-      - $values/helm_values/dyvenia/observability/hetzner/dyvenia-internal-dev/prometheus/values-1-main.yaml
-      - $values/helm_values/dyvenia/observability/hetzner/dyvenia-internal-dev/prometheus/values-2-alert-rules.yaml
-      - $values/helm_values/dyvenia/observability/hetzner/dyvenia-internal-dev/prometheus/values-3-prometheus-config.yaml
-      - $values/helm_values/dyvenia/observability/hetzner/dyvenia-internal-dev/prometheus/values-4-alertmanager-template.yaml
+      - $values/prometheus-values/values-1-main.yaml
+      - $values/prometheus-values/values-3-prometheus-config.yaml
   - repoURL: 'git@github.com:mshestalyuk/k8s-test-repo.git'
     targetRevision: 'master'
     ref: values
+    
