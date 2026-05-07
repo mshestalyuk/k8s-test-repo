@@ -177,8 +177,6 @@ serverFiles:
             regex: true
           - source_labels: [__address__]
             target_label: __param_target
-          - target_label: __address__
-            replacement: blackbox
           - source_labels: [__param_target]
             target_label: instance
           - action: labelmap
@@ -285,50 +283,3 @@ serverFiles:
           - source_labels: [__meta_kubernetes_pod_node_name]
             action: replace
             target_label: node
-
-# adds additional scrape configs to prometheus.yml
-# must be a string so you have to add a | after extraScrapeConfigs:
-# example adds prometheus-blackbox-exporter scrape config
-extraScrapeConfigs: |
-   - job_name: 'prometheus-blackbox-exporter'
-     metrics_path: /probe
-     params:
-       module: [http_2xx]
-     static_configs:
-       - targets:
-          - https://argocd.dev.internal.dyvenia.lan
-          - https://grafana.dev.internal.dyvenia.lan
-          - https://sso-dev.dyvenia.com
-          - https://luma-demo.thescalableway.com
-          - https://luma.dev.internal.dyvenia.lan
-          - https://werfen-luma-dev.dyvenia.com
-          - https://werfen-luma-test.dyvenia.com
-          - https://pgadmin.dev.internal.dyvenia.lan
-          - https://prometheus.dev.internal.dyvenia.lan
-          - https://timeflow.dev.internal.dyvenia.lan
-          - https://superset.dev.internal.dyvenia.lan
-          - https://privatebin-dev.dyvenia.com
-          - https://dev--thescalableway.netlify.app
-          - https://dev.meetperspective.com
-     relabel_configs:
-       - source_labels: [__address__]
-         target_label: __param_target
-       - source_labels: [__param_target]
-         target_label: instance
-       - target_label: __address__
-         replacement: prometheus-blackbox-exporter:9115
-
-   - job_name: 'prometheus-blackbox-exporter-http_4xx'
-     metrics_path: /probe
-     params:
-       module: [http_4xx]
-     static_configs:
-       - targets:
-          - https://atttiva-t.velux.com
-     relabel_configs:
-       - source_labels: [__address__]
-         target_label: __param_target
-       - source_labels: [__param_target]
-         target_label: instance
-       - target_label: __address__
-         replacement: prometheus-blackbox-exporter:9115
