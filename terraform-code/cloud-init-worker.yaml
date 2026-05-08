@@ -2,6 +2,7 @@
 packages:
   - curl
 users:
+  - default
   - name: cluster
     ssh-authorized-keys:
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILaLhAhih/YtH9I1F7LZ2rfO5RcMLXHLPqDoKFdjngZ9 mshestalyuk@MaksPC
@@ -22,9 +23,16 @@ write_files:
 
 runcmd:
   - apt-get update -y
-  - # wait for the master node to be ready by trying to connect to it
-  - until curl -k https://10.0.1.1:6443; do sleep 5; done
-  - # copy the token from the master node
-  - REMOTE_TOKEN=$(ssh -o StrictHostKeyChecking=accept-new cluster@10.0.1.1 sudo cat /var/lib/rancher/k3s/server/node-token)
-  - # Install k3s worker
-  - curl -sfL https://get.k3s.io | K3S_URL=https://10.0.1.1:6443 K3S_TOKEN=$REMOTE_TOKEN INSTALL_K3S_EXEC="--kubelet-arg cloud-provider=external" sh -
+  - apt-get install -y curl
+  # Wait for the master API server to be ready
+  - until curl -k -s -o /dev/null https://10.0.1.1:6443; do echo "waiting for master..."; sleep 5; done
+  # Fetch the join token from the master via SSH (uses the key we wrote above)
+  - REMOTE_TOKEN=$(ssh -o StrictHostKeyChecking=accept-new -i /root/.ssh/id_rsa cluster@10.0.1.1 sudo cat /var/lib/rancher/k3s/server/node-token)
+  # Detect own IPs
+  - PRIVATE_IP=$(ip -4 -o addr show | awk '$4 ~ /^10\.0\./ {print $4}' | cut -d/ -f1 | head -1)
+  - PUBLIC_IP=$(curl -s -4 ifconfig.me)
+  - |
+    curl -sfL https://get.k3s.io | K3S_URL=https://10.0.1.1:6443 K3S_TOKEN=$REMOTE_TOKEN INSTALL_K3S_EXEC="\
+      --kubelet-arg cloud-provider=external \
+      --node-ip ${PRIVATE_IP} \
+      --node-external-ip ${PUBLIC_IP}" sh -
