@@ -1,0 +1,94 @@
+# k3s-upgrade-plans.yaml
+# Defines upgrade plans for K3s server and agent nodes
+# Servers upgrade first, then agents follow
+
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: k3s-server
+  namespace: system-upgrade
+  labels:
+    k3s-upgrade: server
+spec:
+  # Upgrade to this K3s version (use channel or specific version)
+  # Channel options: stable, latest, v1.28, v1.29, etc.
+  # channel: https://update.k3s.io/v1-release/channels/v1.30.9+k3s1
+  # Or use a specific version:
+  version: v1.35.3+k3s1
+
+  # Concurrency: how many nodes to upgrade simultaneously
+  concurrency: 1
+
+  # Only select server nodes (control plane)
+  nodeSelector:
+    matchExpressions:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+
+  # Tolerate control plane taints
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "node-role.kubernetes.io/master"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+  # Service account with permissions to perform upgrade
+  serviceAccountName: system-upgrade
+
+  # Cordon node before upgrade (prevent new workloads)
+  cordon: true
+
+  # Drain configuration
+  drain:
+    force: true
+    skipWaitForDeleteTimeout: 60
+    ignoreDaemonSets: true
+    deleteEmptydirData: true
+    # deleteLocalData: true
+  # Upgrade container configuration
+  upgrade:
+    image: rancher/k3s-upgrade
+
+---
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: k3s-agent
+  namespace: system-upgrade
+  labels:
+    k3s-upgrade: agent
+spec:
+  # Same channel/version as server plan
+  version: v1.35.3+k3s1
+
+  # Can upgrade multiple agents in parallel
+  concurrency: 1
+
+  # Only select agent nodes (not control plane)
+  nodeSelector:
+    matchExpressions:
+      - key: node-role.kubernetes.io/control-plane
+        operator: DoesNotExist
+
+  serviceAccountName: system-upgrade
+
+  cordon: true
+
+  drain:
+    force: true
+    skipWaitForDeleteTimeout: 60
+    ignoreDaemonSets: true
+    # deleteLocalData: true
+    deleteEmptydirData: true
+
+  # IMPORTANT: Wait for all servers to complete before upgrading agents
+  prepare:
+    image: rancher/k3s-upgrade
+    args:
+      - prepare
+      - k3s-server  # References the server plan name
+
+  upgrade:
+    image: rancher/k3s-upgrade
